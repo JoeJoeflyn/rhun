@@ -56,6 +56,14 @@ try {
     }
     Update-MpSignature
     $status = Get-MpComputerStatus
+    if ($ConfigureRunner) {
+        # The service applies protection preferences asynchronously. Wait for the
+        # state transition, rather than mistaking it for a disabled engine.
+        for ($attempt = 0; $attempt -lt 15 -and -not $status.RealTimeProtectionEnabled; $attempt++) {
+            Start-Sleep -Seconds 2
+            $status = Get-MpComputerStatus
+        }
+    }
     $report.engine = $status | Select-Object AMRunningMode, AMServiceEnabled, AntivirusEnabled,
         RealTimeProtectionEnabled, AMProductVersion, AMEngineVersion,
         AntivirusSignatureVersion, AntivirusSignatureLastUpdated
