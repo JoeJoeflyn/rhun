@@ -48,7 +48,7 @@ jobs:
         if: matrix.helper != 'official'
         env:
           RHUN_DIST: '1'
-        run: python tools/build-windows.py release --helper-mode ${{ matrix.helper }}
+        run: python tools/build-windows.py test --helper-mode ${{ matrix.helper }}
       - name: Package
         if: matrix.helper != 'official'
         run: python tools/package-windows.py
@@ -59,7 +59,7 @@ jobs:
           RHUN_DIST: '1'
         run: |
           $hashes = Get-FileHash build/windows/rhun.exe,build/windows/rhun.com -Algorithm SHA256
-          python tools/build-windows.py release --helper-mode ${{ matrix.helper }}
+          python tools/build-windows.py test --helper-mode ${{ matrix.helper }}
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           foreach ($file in $hashes) {
             if ((Get-FileHash $file.Path -Algorithm SHA256).Hash -ne $file.Hash) { throw "Build is not reproducible: $($file.Path)" }
@@ -71,6 +71,17 @@ jobs:
           tests/windows-defender.ps1
           $archive = (Get-ChildItem build/windows/rhun-*-windows-x86_64.zip).FullName
           tools/scan-windows.ps1 -Path @('build/windows/rhun.exe', 'build/windows/rhun.com', $archive) -ConfigureRunner -ReportOnly
+      - name: Helper runtime regression tests
+        if: matrix.helper == 'plain' || matrix.helper == 'encoded'
+        run: python tests/windows.py
+      - name: Defender runtime evidence
+        if: always()
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force build/defender | Out-Null
+          Get-MpThreat | Select-Object ThreatID, ThreatName, IsActive | ConvertTo-Json -Depth 5 | Set-Content build/defender/threats.json
+          Get-MpThreatDetection | Select-Object InitialDetectionTime, LastThreatStatusChangeTime, ThreatID, Resources, ProcessName, ActionSuccess | ConvertTo-Json -Depth 5 | Set-Content build/defender/runtime-detections.json
+          Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-Windows Defender/Operational'; StartTime=(Get-Date).AddHours(-1); Id=1116,1117,1121,1122} -ErrorAction SilentlyContinue | Select-Object TimeCreated, Id, Message | ConvertTo-Json -Depth 5 | Set-Content build/defender/runtime-events.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
