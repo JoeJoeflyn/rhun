@@ -34,18 +34,37 @@ jobs:
       - name: Build
         id: build
         run: python tools/build-windows.py test
+      - name: Defender verdict tests
+        shell: pwsh
+        run: tests/windows-defender.ps1
+      - name: Defender binary scan
+        shell: pwsh
+        timeout-minutes: 10
+        run: tools/scan-windows.ps1 -Path build/windows/rhun.exe,build/windows/rhun.com -ConfigureRunner -ReportDir build/defender/binaries
       - name: Native tests
         run: python tests/windows.py
       - name: Package
         id: package
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: python tools/package-windows.py
+      - name: Defender archive scan
+        shell: pwsh
+        timeout-minutes: 10
+        run: |
+          $archive = (Get-ChildItem build/windows/rhun-*-windows-x86_64.zip).FullName
+          tools/scan-windows.ps1 -Path $archive -ReportDir build/defender/archive
       - name: Installer tests
         if: ${{ !cancelled() && steps.package.outcome == 'success' }}
         run: python tests/windows-install.py
       - name: Updater tests
         if: ${{ !cancelled() && steps.package.outcome == 'success' }}
         run: python tests/windows-update.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-defender
+          path: build/defender
+          if-no-files-found: warn
       - uses: actions/upload-artifact@v4
         with:
           name: windows-x86_64

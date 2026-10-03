@@ -27,6 +27,12 @@ jobs:
         run: sudo apt-get update -qq && sudo apt-get install -y -qq binutils curl git python3
       - name: Tests
         run: tests/run.sh
+      - name: Defender archive scan
+        shell: pwsh
+        timeout-minutes: 10
+        run: |
+          $archive = (Get-ChildItem build/windows/rhun-*-windows-x86_64.zip).FullName
+          tools/scan-windows.ps1 -Path $archive -ReportDir build/defender/archive
       - name: Installer tests
         run: sh tests/install.sh
       - name: Build
@@ -130,12 +136,25 @@ jobs:
           RHUN_DIST: '1'
         id: build
         run: python tools/build-windows.py test
+      - name: Defender verdict tests
+        shell: pwsh
+        run: tests/windows-defender.ps1
+      - name: Defender binary scan
+        shell: pwsh
+        timeout-minutes: 10
+        run: tools/scan-windows.ps1 -Path build/windows/rhun.exe,build/windows/rhun.com -ConfigureRunner -ReportDir build/defender/binaries
       - name: Native tests
         run: python tests/windows.py
       - name: Package
         id: package
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: python tools/package-windows.py
+      - name: Defender archive scan
+        shell: pwsh
+        timeout-minutes: 10
+        run: |
+          $archive = (Get-ChildItem build/windows/rhun-*-windows-x86_64.zip).FullName
+          tools/scan-windows.ps1 -Path $archive -ReportDir build/defender/archive
       - name: Installer tests
         if: ${{ !cancelled() && steps.package.outcome == 'success' }}
         run: python tests/windows-install.py
@@ -144,6 +163,12 @@ jobs:
           RHUN_DIST: '1'
         if: ${{ !cancelled() && steps.package.outcome == 'success' }}
         run: python tests/windows-update.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-defender
+          path: build/defender
+          if-no-files-found: warn
       - uses: actions/upload-artifact@v4
         with:
           name: windows
@@ -159,8 +184,16 @@ jobs:
           fetch-depth: 0
       - uses: actions/download-artifact@v4
         with:
+          name: linux
           path: dist
-          merge-multiple: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: macos
+          path: dist
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows
+          path: dist
       - name: Checksums, version and installer
         run: |
           cp install.sh install.ps1 dist/
