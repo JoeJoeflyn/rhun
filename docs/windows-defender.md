@@ -6,10 +6,13 @@ the published checksum. This establishes which release was downloaded, not wheth
 the detection is correct. No Windows build is considered verified clean solely
 because it matches source or passes functional tests.
 
-Normal Windows builds embed readable PowerShell helpers and use `-Command`.
-The previous build compressed both helpers, embedded base64 strings, and used
-`-EncodedCommand`. Removing that encoding is a candidate mitigation. It does not
-establish that the encoding caused the reported detection.
+Normal Windows builds retain the existing compressed, base64-encoded PowerShell
+helpers and `-EncodedCommand`. The readable `-Command` variant is diagnostic only.
+In the initial Server 2022 comparison, both forms scanned clean, but running the
+readable AI helper triggered `Trojan:Win32/ClickFix.PM!MTB` on its command line and
+`Behavior:Win32/Execution.A!ml` on the editor. The encoded variant passed the same
+runtime tests. This rules out publishing the readable-command experiment as a
+fix; it does not explain the original Windows 11 detection.
 
 ## Automated comparison
 
@@ -34,7 +37,10 @@ tool restores protection only when explicitly requested on a disposable
 GitHub-hosted runner. Regular and release Windows workflows scan both executables
 and the packaged ZIP. A failed, skipped, or unavailable scan stops publication.
 Comparison jobs record all outcomes, including detections, without declaring them
-clean. Their artifacts include hashes, engine and signature versions, preferences,
+clean. A successful comparison job means evidence was collected, not that its
+sample is safe. The original, encoded, and readable variants also run the native
+regression suite with Defender enabled. Runtime outcomes and detections are
+recorded separately from static scan verdicts. Their artifacts include hashes, engine and signature versions, preferences,
 scan output, and Defender events. Windows Server results do not establish the
 behavior of a Windows 11 download or installation.
 

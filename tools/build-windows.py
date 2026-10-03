@@ -35,15 +35,15 @@ def run(args):
     subprocess.run([str(a) for a in args], cwd=ROOT, check=True)
 
 
-def assets(helper_mode="plain"):
+def assets(helper_mode="encoded"):
     lines = ['.section .rdata,"dr"']
 
     def emit(label, path):
         lines.extend([f'.globl {label}, {label}_end', '.p2align 4',
                       f'{label}: .incbin "{path.as_posix()}"', f'{label}_end: .byte 0'])
 
-    # Keep helpers readable in normal builds. Diagnostic modes isolate the old
-    # encoding and each payload without changing the process or environment API.
+    # Diagnostic modes isolate encoding and each payload without changing the
+    # process or environment API. Keep the tested encoding in normal builds.
     import base64
     import gzip
     installer = (ROOT / 'install.ps1').read_text(encoding='utf-8')
@@ -117,7 +117,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('mode', choices=['debug', 'release', 'test'], nargs='?', default='debug')
     parser.add_argument('--helper-mode', choices=['plain', 'encoded', 'no-ai', 'no-updater', 'none'],
-                        default='plain', help='Use encoded/disabled helpers only for Defender diagnostics.')
+                        default='encoded', help='Use plain/disabled helpers only for Defender diagnostics.')
     args = parser.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
     mc, dlltool, link, rc = map(tool, ['llvm-mc', 'llvm-dlltool', 'lld-link', 'llvm-rc'])
