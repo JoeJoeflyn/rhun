@@ -4,6 +4,7 @@ param(
     [string[]]$Path,
     [string]$ReportDir = 'build/defender',
     [switch]$ConfigureRunner,
+    [switch]$UseCurrentSignatures,
     [switch]$ReportOnly
 )
 $ErrorActionPreference = 'Stop'
@@ -54,7 +55,17 @@ try {
             -DisableRealtimeMonitoring $false -DisableBlockAtFirstSeen $false `
             -MAPSReporting Advanced -SubmitSamplesConsent SendSafeSamples -ScanAvgCPULoadFactor 50
     }
-    Update-MpSignature
+    $report.signatureUpdate = [ordered]@{ requested = -not $UseCurrentSignatures; errors = @() }
+    if (-not $UseCurrentSignatures) {
+        for ($attempt = 0; $attempt -lt 3; $attempt++) {
+            try { Update-MpSignature; break }
+            catch {
+                $report.signatureUpdate.errors += $_.Exception.Message
+                if ($attempt -eq 2) { throw }
+                Start-Sleep -Seconds 2
+            }
+        }
+    }
     $status = Get-MpComputerStatus
     if ($ConfigureRunner) {
         # The service applies protection preferences asynchronously. Wait for the
@@ -67,6 +78,8 @@ try {
     $report.engine = $status | Select-Object AMRunningMode, AMServiceEnabled, AntivirusEnabled,
         RealTimeProtectionEnabled, AMProductVersion, AMEngineVersion,
         AntivirusSignatureVersion, AntivirusSignatureLastUpdated
+    $age = [DateTime]::UtcNow - $status.AntivirusSignatureLastUpdated.ToUniversalTime()
+    if ($age.TotalHours -gt 24) { throw 'Defender signatures are more than 24 hours old.' }
     $report.os = Get-CimInstance Win32_OperatingSystem | Select-Object Caption, Version, BuildNumber
     $report.preferences = Get-MpPreference | Select-Object ExclusionPath, ExclusionExtension,
         ExclusionProcess, DisableArchiveScanning, DisableScriptScanning, MAPSReporting, SubmitSamplesConsent

@@ -52,7 +52,7 @@ jobs:
         timeout-minutes: 10
         run: |
           $archive = (Get-ChildItem build/windows/rhun-*-windows-x86_64.zip).FullName
-          tools/scan-windows.ps1 -Path $archive -ReportDir build/defender/archive
+          tools/scan-windows.ps1 -Path $archive -UseCurrentSignatures -ReportDir build/defender/archive
       - name: Installer tests
         if: ${{ !cancelled() && steps.package.outcome == 'success' }}
         run: python tests/windows-install.py

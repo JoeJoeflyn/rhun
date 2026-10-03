@@ -35,7 +35,9 @@ contents. Each rebuilt binary is also rebuilt a second time and compared by hash
 GitHub-hosted Windows images disable Defender and exclude their drives. The scan
 tool restores protection only when explicitly requested on a disposable
 GitHub-hosted runner. Regular and release Windows workflows scan both executables
-and the packaged ZIP. A failed, skipped, or unavailable scan stops publication.
+and the packaged ZIP. A failed, skipped, or unavailable scan stops publication. Definition updates retry
+transient failures; the archive scan reuses the definitions already updated for
+that job. Signatures older than 24 hours are rejected.
 Comparison jobs record all outcomes, including detections, without declaring them
 clean. A successful comparison job means evidence was collected, not that its
 sample is safe. The original, encoded, and readable variants also run the native
