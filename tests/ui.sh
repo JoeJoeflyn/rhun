@@ -48,7 +48,7 @@ for s in tests/scripts/*.rsc; do
     if cmp -s "$tmp/$n.out" "tests/data/$n.ui.expected"; then
         echo "ok   ui/$n"
     else
-        echo "FAIL ui/$n"; diff "tests/data/$n.ui.expected" "$tmp/$n.out" | head -20; fail=1
+        echo "FAIL ui/$n"; diff "tests/data/$n.ui.expected" "$tmp/$n.out" | head -20; echo "=== full output"; cat "$tmp/$n.out"; echo "=== end"; fail=1
     fi
 done
 rm -rf "$tmp"

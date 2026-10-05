@@ -39,5 +39,5 @@ jobs:
         run: |
           sw_vers; git --version; ls -l /bin/dash /bin/sh
           sh tests/git-terminal-debug.sh
-      - name: UI scripts
-        run: sh tests/ui.sh
+      - name: Full suite
+        run: tests/run.sh

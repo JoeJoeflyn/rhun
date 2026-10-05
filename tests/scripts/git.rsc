@@ -48,6 +48,7 @@ wait 300
 type git commit -qam 'Commit all'
 key Return
 wait 1500
+print-term
 wait-git
 print-git
 print-gitlog
