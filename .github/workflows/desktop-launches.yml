@@ -35,3 +35,9 @@ jobs:
         run: python3 tests/desktop-ux.py
       - name: Finder file launches
         run: python3 tests/mac-launch.py
+      - name: Terminal commit diagnostics
+        run: |
+          sw_vers; git --version; ls -l /bin/dash /bin/sh
+          sh tests/git-terminal-debug.sh
+      - name: UI scripts
+        run: sh tests/ui.sh
