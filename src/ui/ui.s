@@ -519,8 +519,8 @@ FN ui_icon_btn
 # ui_card(x, y, w, h): floating surface with soft shadow and border
 FN ui_card
     PROLOGUE
-    M r8d, MI_12
-    M r9d, MI_4
+    M r8d, MI_4
+    M r9d, MI_2
     M eax, MI_RADIUS
     add eax, [rip + g_mt + 4*MI_2]
     push rax
@@ -541,7 +541,8 @@ FN ui_card_shadow
     mov [rsp], r9d
     mov eax, [rbp + 16]
     mov [rsp + 4], eax
-    # shadow: a few expanding translucent rounded rects
+    # shadow: expanding translucent rounded rects at 1px steps — cumulative
+    # alpha falls off linearly to zero, a slight soft edge without a rim
     mov ebx, r8d
 .Lcard_sh:
     test ebx, ebx
@@ -556,13 +557,12 @@ FN ui_card_shadow
     mov r8d, [rsp + 4]          # shadow corners grow with the spread, from the body's
     sub r8d, [rip + g_mt + 4*MI_2]
     add r8d, ebx
-    mov r9d, 0x07000000
+    mov r9d, 0x08000000
     cmp dword ptr [rip + g_theme_dark], 0
     jne 1f
-    mov r9d, 0x04000000
+    mov r9d, 0x05000000
 1:  call gfx_round_rect
-    M eax, MI_2
-    sub ebx, eax
+    dec ebx
     jg .Lcard_sh
 .Lcard_body:
     mov edi, r12d
@@ -572,6 +572,8 @@ FN ui_card_shadow
     mov r8d, [rsp + 4]
     COLOR r9d, T_BORDER
     COLOR eax, T_POPUP
+    and eax, 0x00ffffff         # vibrancy: let a hint of what's under show through
+    or eax, 0xe6000000
     push rax
     push rax
     call gfx_frame
