@@ -1022,20 +1022,25 @@ FN explorer_draw
 55: add r15d, [rip + g_mt + 4*MI_16]
     add r15d, [rip + g_mt + 4*MI_2]
     M ecx, MI_16
-    mov edi, IC_FILE
     cmp dword ptr [r14 + N_dir], 0
     je 56f
     mov edi, IC_FOLDER
-56: mov esi, r15d
+    COLOR r8d, T_ACCENT
+    jmp 57f
+56: mov rdi, [r14 + N_name]
+    push rcx
+    call file_icon                 # eax icon, edx theme slot
+    mov edi, eax
+    mov r8d, edx
+    pop rcx
+    lea rax, [rip + g_theme]
+    mov r8d, [rax + 4*r8]
+57: mov esi, r15d
     mov edx, ebx
     sub edx, ecx
     sar edx, 1
     add edx, r13d
-    COLOR r8d, T_MUTED
-    cmp dword ptr [r14 + N_dir], 0
-    je 57f
-    COLOR r8d, T_ACCENT
-57: call icon_draw
+    call icon_draw
     add r15d, [rip + g_mt + 4*MI_20]
     add r15d, [rip + g_mt + 4*MI_2]
     # git: name in the status color, the letter at the right for files
