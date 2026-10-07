@@ -1029,10 +1029,12 @@ FN explorer_draw
     jmp 57f
 56: mov rdi, [r14 + N_name]
     push rcx
-    call file_icon                 # eax icon, edx theme slot
+    call file_icon                 # eax icon, edx theme slot or literal ARGB
     mov edi, eax
     mov r8d, edx
     pop rcx
+    test r8d, r8d
+    js 57f                         # sign bit: literal brand ARGB, not a theme slot
     lea rax, [rip + g_theme]
     mov r8d, [rax + 4*r8]
 57: mov esi, r15d
