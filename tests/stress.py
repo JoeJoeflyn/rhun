@@ -92,6 +92,23 @@ class Stress(unittest.TestCase):
         self.assertNotIn('> node_modules', output)
         self.assertNotIn('  node_modules', output)
 
+    def test_minimap_press_scrolls_to_that_part_of_the_file(self):
+        file = self.work / 'huge.txt'
+        with file.open('w', encoding='utf-8') as f:
+            f.write('line\n' * 600_000)
+        # Zed-style: the strip shows ~200 lines and scrolls with the view, so a
+        # press seeks to the line under the pointer, not a file fraction. The
+        # 600k-line file exercises the big-number scroll math.
+        output = self.run_editor('minimap-press-600k-lines', [
+            'move 930 524', 'wait 50', 'down', 'wait 50', 'up', 'wait 50', 'print-scroll',
+            'move 930 136', 'wait 50', 'down', 'wait 50', 'up', 'wait 50', 'print-scroll'], file)
+        ys = [int(part[2:]) for line in output.splitlines() if line.startswith('x=')
+              for part in line.split() if part.startswith('y=')]
+        self.assertEqual(len(ys), 2, output)
+        low, high = (y / 256 for y in ys)
+        self.assertTrue(0 < low < 1000, f'press on the strip -> line {low:.0f} (600k lines)')
+        self.assertTrue(0 < high < 1000, f'press higher -> line {high:.0f}')
+
     def test_repeated_palette_and_tab_lifecycle(self):
         file = self.work / 'stable.txt'
         file.write_text('stable\n', encoding='utf-8')

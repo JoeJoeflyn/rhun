@@ -19,6 +19,11 @@ FN wrap_cols
     sub eax, [rip + g_ed_tx]
     add eax, [rip + g_ed_x]
     sub eax, [rip + g_mt + 4*MI_24]
+    push rax
+    call minimap_w
+    mov ecx, eax
+    pop rax
+    sub eax, ecx                # the minimap strip is not text space
     cdq
     mov ecx, [rip + g_cw]
     test ecx, ecx

@@ -10,6 +10,7 @@
 .globl cfg_line_numbers, cfg_highlight_line, cfg_indent_guides, cfg_cursor_blink, cfg_whitespace
 .globl cfg_sidebar, cfg_sidebar_w, cfg_agents, cfg_agents_w, cfg_ui_scale, cfg_final_newline
 .globl cfg_trim_trailing, cfg_scroll_past_end, cfg_smooth_caret, cfg_theme, cfg_font, cfg_ui_font
+.globl cfg_minimap
 .globl cfg_exclude, cfg_agent_sources, cfg_restore_session, cfg_auto_pairs, cfg_word_wrap, cfg_decorations
 .globl cfg_vim
 .globl cfg_restore_project
@@ -36,6 +37,7 @@ cfg_ui_scale: .long 100
 cfg_final_newline: .long 1
 cfg_trim_trailing: .long 0
 cfg_scroll_past_end: .long 1
+cfg_minimap: .long 1
 cfg_smooth_caret: .long 1
 cfg_restore_session: .long 1
 cfg_auto_pairs: .long 1
@@ -687,6 +689,7 @@ g_settings:
     SETTING .Ls_editor, smooth_caret, ST_BOOL, cfg_smooth_caret, 0, 1, 1, 0, "Wide caret", "Draw a 2 point caret instead of a hairline."
     SETTING .Ls_editor, auto_pairs, ST_BOOL, cfg_auto_pairs, 0, 1, 1, 0, "Auto-close brackets", "Insert the closing bracket or quote."
     SETTING .Ls_editor, scroll_past_end, ST_BOOL, cfg_scroll_past_end, 0, 1, 1, 0, "Scroll past end", "Allow scrolling the last line to the top."
+    SETTING .Ls_editor, minimap, ST_BOOL, cfg_minimap, 0, 1, 1, 0, "Minimap", "Zoomed-out code map at the right edge of the editor."
     SETTING .Ls_editor, vim_mode, ST_BOOL, cfg_vim, 0, 1, 1, 0, "Vim mode", "Normal, insert and visual modes with vim keys."
     SETTING .Ls_files, trim_trailing_whitespace, ST_BOOL, cfg_trim_trailing, 0, 1, 1, 0, "Trim trailing whitespace", "Remove spaces at line ends when saving."
     SETTING .Ls_files, final_newline, ST_BOOL, cfg_final_newline, 0, 1, 1, 0, "Final newline", "Make sure saved files end with a newline."

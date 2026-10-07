@@ -21,6 +21,7 @@ g_ed_w: .long 0
 g_ed_h: .long 0
 g_ed_tx: .long 0                # x of column 0 (before horizontal scroll)
 g_dragging: .long 0
+.globl hs_on
 hs_on: .long 0                  # the horizontal scrollbar is shown (hscroll_measure)
 hs_content: .long 0             # px: the widest line and a margin
 hs_view: .long 0                # px: the text area
@@ -1703,6 +1704,7 @@ editor_gutter:
     ret
 
 # clamp_scroll(doc)
+.globl clamp_scroll
 clamp_scroll:
     mov rax, [rdi + DOC_nlines]
     cmp dword ptr [rip + cfg_scroll_past_end], 0
@@ -2169,6 +2171,11 @@ FN editor_draw
     mov eax, [rip + g_ed_x]
     add eax, [rip + g_ed_w]
     sub eax, [rip + g_mt + 4*MI_12]
+    mov [rsp + 104], eax
+    call minimap_w
+    mov ecx, eax
+    mov eax, [rsp + 104]
+    sub eax, ecx                # nor the minimap strip next to it
     cmp [rip + g_mx], eax
     jge .Led_noinput
     # nor the horizontal one's along the bottom of the text
@@ -2526,7 +2533,9 @@ FN editor_draw
     mov edx, [rip + g_ed_w]
     M ecx, MI_2
     call gfx_fill
-92: call gfx_clip_pop
+92: mov rdi, rbx
+    call minimap_draw
+    call gfx_clip_pop
 .Led_ret:
     EPILOGUE
 
